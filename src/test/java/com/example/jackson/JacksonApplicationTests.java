@@ -1,31 +1,29 @@
 package com.example.jackson;
 
 import com.example.jackson.pojos.Car;
+import com.example.jackson.pojos.Employee;
 import com.example.jackson.pojos.Transaction;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Array;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @SpringBootTest
 class JacksonApplicationTests {
     private static String jsonArray = "[{\"brand\":\"ford\"}, {\"brand\":\"Fiat\"}]";
-    private static String jsonStr = "{\"brand\":\"AUDI\",\"doors\":2}";
+    private static String jsonStr =
+            "{ \"brand\" : \"Mercedes\", \"doors\" : 4," +
+                    "  \"owners\" : [\"John\", \"Jack\", \"Jill\"]," +
+                    "  \"nestedObject\" : { \"field\" : \"value\" } }";
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
@@ -85,19 +83,100 @@ class JacksonApplicationTests {
         car.setDoors(4);
 //        objectMapper.writeValue(new FileOutputStream("output-2.json"),car);
         String json = objectMapper.writeValueAsString(car);
-        byte[] b=objectMapper.writeValueAsBytes(car);
+        byte[] b = objectMapper.writeValueAsBytes(car);
         System.out.println(json);
         System.out.println(Arrays.toString(b));
     }
 
     @Test
     void jacksonDateFormats() throws JsonProcessingException {
-        Transaction transaction  = new Transaction("transfer", new Date());
+        Transaction transaction = new Transaction("transfer", new Date());
 
         System.out.println(objectMapper.writeValueAsString(transaction));
 
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
         objectMapper.setDateFormat(simpleDateFormat);
         System.out.println(objectMapper.writeValueAsString(transaction));
+    }
+
+    @Test
+    void jacksonTreeModelExample() {
+        try {
+            JsonNode jsonNode = objectMapper.readTree(jsonStr);
+            System.out.println(jsonNode);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    void jacksonJsonNodeExample() {
+        try {
+            JsonNode jsonNode = objectMapper.readValue(jsonStr, JsonNode.class);
+
+            JsonNode brandNode = jsonNode.get("brand");
+            String brand = brandNode.asText();
+            System.out.println("brand = " + brand);
+
+            JsonNode doorsNode = jsonNode.get("doors");
+            int doors = doorsNode.asInt();
+            System.out.println("doors = " + doors);
+
+            JsonNode array = jsonNode.get("owners");
+            JsonNode jsonNode1 = array.get(0);
+            String john = jsonNode1.asText();
+            System.out.println("john = " + john);
+
+            JsonNode child = jsonNode.get("nestedObject");
+            JsonNode childField = child.get("field");
+            String field = childField.asText();
+            System.out.println("field = " + field);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Test
+    void convertObjectToJsonNode() {
+        Car car = new Car("Cadillac", 4);
+        JsonNode carJsonNode = objectMapper.valueToTree(car);
+        System.out.println(carJsonNode);
+    }
+
+    @Test
+    void convertJsonNodeToObject() {
+        String carJson = "{ \"brand\" : \"Mercedes\", \"doors\" : 5 }";
+        try {
+            JsonNode carJsonNode = objectMapper.readTree(carJson);
+            Car car = objectMapper.treeToValue(carJsonNode, Car.class);
+            System.out.println(car);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    void readAndWriteYAMLWithObjectMapper() {
+        ObjectMapper objectMapper1 = new ObjectMapper(new YAMLFactory());
+        Employee employee = new Employee("John Doe", "john@doe.com");
+
+        String yamlString = null;
+        try {
+            yamlString = objectMapper1.writeValueAsString(employee);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        System.out.println(yamlString);
+
+        Employee employee2 = null;
+        try {
+            employee2 = objectMapper1.readValue(yamlString, Employee.class);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println(employee2);
     }
 }
