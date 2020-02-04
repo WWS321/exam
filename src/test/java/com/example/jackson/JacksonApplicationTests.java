@@ -19,8 +19,9 @@ import java.util.*;
 
 @SpringBootTest
 class JacksonApplicationTests {
-    private static String jsonArray = "[{\"brand\":\"ford\"}, {\"brand\":\"Fiat\"}]";
-    private static String jsonStr =
+    private static final String jsonArray = "[{\"brand\":\"ford\"}, {\"brand\":\"Fiat\"}]";
+    private static final String jsonStr = "{ \"brand\" : \"Mercedes\", \"doors\" : 5 }";
+    private static final String carJson =
             "{ \"brand\" : \"Mercedes\", \"doors\" : 4," +
                     "  \"owners\" : [\"John\", \"Jack\", \"Jill\"]," +
                     "  \"nestedObject\" : { \"field\" : \"value\" } }";
@@ -112,7 +113,7 @@ class JacksonApplicationTests {
     @Test
     void jacksonJsonNodeExample() {
         try {
-            JsonNode jsonNode = objectMapper.readValue(jsonStr, JsonNode.class);
+            JsonNode jsonNode = objectMapper.readValue(carJson, JsonNode.class);
 
             JsonNode brandNode = jsonNode.get("brand");
             String brand = brandNode.asText();
@@ -147,9 +148,8 @@ class JacksonApplicationTests {
 
     @Test
     void convertJsonNodeToObject() {
-        String carJson = "{ \"brand\" : \"Mercedes\", \"doors\" : 5 }";
         try {
-            JsonNode carJsonNode = objectMapper.readTree(carJson);
+            JsonNode carJsonNode = objectMapper.readTree(jsonStr);
             Car car = objectMapper.treeToValue(carJsonNode, Car.class);
             System.out.println(car);
         } catch (IOException e) {
